@@ -195,6 +195,9 @@ for idx, (metric_key, metric) in enumerate(metrics.items(), 1):
         row=idx, col=1
     )
 
+# Show the figure
+fig.show() 
+
 # Print summary statistics
 print("\nEmail Marketing Metrics Analysis")
 print("=" * 40)
@@ -209,5 +212,3 @@ for metric_key, metric in metrics.items():
     print(f"Standard Deviation: {metric['data'].std():.1f}%")
     print(f"Range: {metric['data'].min():.1f}% - {metric['data'].max():.1f}%")
 
-# Show the figure
-fig.show() 
