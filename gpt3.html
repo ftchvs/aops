@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Rotating ASCII Sphere</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: black;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <script>
+    // Get the canvas and set its dimensions.
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Sphere and projection parameters.
+    const R = 100;          // Radius of the sphere.
+    const offset = 300;     // Z offset to push the sphere in front of the viewer.
+    const scale = 500;      // Scale factor for our perspective projection.
+
+    // Rotation angles and speeds.
+    let angleX = 0, angleY = 0;
+    const dAngleX = 0.01, dAngleY = 0.02;
+
+    // Sampling steps for theta and phi (you can adjust these for quality/performance).
+    const dTheta = Math.PI / 30; // Theta goes from 0 to PI.
+    const dPhi = Math.PI / 30;   // Phi goes from 0 to 2*PI.
+
+    function animate() {
+      // Clear the canvas.
+      ctx.fillStyle = "black";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Update rotation angles.
+      angleX += dAngleX;
+      angleY += dAngleY;
+
+      // Loop over the sphere’s surface.
+      for (let theta = 0; theta <= Math.PI; theta += dTheta) {
+        for (let phi = 0; phi < 2 * Math.PI; phi += dPhi) {
+          // 1. Compute the point on the sphere (using spherical coordinates).
+          let x = R * Math.sin(theta) * Math.cos(phi);
+          let y = R * Math.sin(theta) * Math.sin(phi);
+          let z = R * Math.cos(theta);
+
+          // 2. Rotate around the X–axis.
+          let x1 = x;
+          let y1 = y * Math.cos(angleX) - z * Math.sin(angleX);
+          let z1 = y * Math.sin(angleX) + z * Math.cos(angleX);
+
+          // Rotate around the Y–axis.
+          let x2 = x1 * Math.cos(angleY) + z1 * Math.sin(angleY);
+          let y2 = y1;
+          let z2 = -x1 * Math.sin(angleY) + z1 * Math.cos(angleY);
+
+          // 3. Translate in Z so that the sphere is entirely in front of the viewer.
+          z2 += offset;
+
+          // 4. Apply a simple perspective projection.
+          let factor = scale / z2;
+          let xProj = x2 * factor + canvas.width / 2;
+          let yProj = y2 * factor + canvas.height / 2;
+
+          // 5. Compute brightness from depth.
+          // The frontmost point is when z2 = offset - R, and the rearmost is when z2 = offset + R.
+          // We then map that so that the front is drawn in pure white (brightness 255)
+          // and the back in a dimmer gray (here, brightness 120).
+          let norm = (z2 - (offset - R)) / (2 * R);  // norm in [0, 1]
+          let brightness = Math.floor(255 - norm * (255 - 120));
+          let color = `rgb(${brightness},${brightness},${brightness})`;
+
+          // 6. Pick a digit (0–9) based on the spherical angles.
+          let digit = (
+            (Math.floor((phi / (2 * Math.PI)) * 10) +
+             Math.floor((theta / Math.PI) * 10)) % 10
+          ).toString();
+
+          // Draw the digit.
+          ctx.fillStyle = color;
+          ctx.font = "14px monospace";
+          ctx.fillText(digit, xProj, yProj);
+        }
+      }
+
+      // Request the next frame.
+      requestAnimationFrame(animate);
+    }
+
+    // Start the animation.
+    animate();
+  </script>
+</body>
+</html>
